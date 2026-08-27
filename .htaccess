@@ -1,0 +1,105 @@
+RewriteEngine On
+
+# ================================================================
+# 1. FORCE HTTPS (Uncomment when you have an SSL certificate)
+# ================================================================
+# RewriteCond %{HTTPS} off
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# ================================================================
+# 2. CANONICAL DOMAIN (Choose ONE, uncomment the one you want)
+# ================================================================
+# Option A: Force NON-WWW (e.g., kitgroup.co.za)
+# RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+# RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
+
+# Option B: Force WWW (e.g., www.kitgroup.co.za)
+# RewriteCond %{HTTP_HOST} !^www\. [NC]
+# RewriteRule ^ https://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# ================================================================
+# 3. REMOVE TRAILING SLASHES (Except directories)
+# ================================================================
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} (.+)/$
+RewriteRule ^ %1 [R=301,L]
+
+# ================================================================
+# 4. REDIRECT /index & /index.php -> /
+# ================================================================
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/index(\.php)?\s [NC]
+RewriteRule ^ index.php [R=301,L]
+
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s(.*)/index(\.php)?\s [NC]
+RewriteRule ^ %1/ [R=301,L]
+
+# ================================================================
+# 5. REDIRECT /home -> /
+# ================================================================
+RewriteRule ^home/?$ / [R=301,L]
+
+# ================================================================
+# 6. EXTERNAL REDIRECT: Clean .php from URL bar
+# ================================================================
+RewriteCond %{THE_REQUEST} \s/+(.+?)\.php[\s?] [NC]
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ /%1 [R=301,L,NE]
+
+# ================================================================
+# 7. DYNAMIC ROUTES (Products, Brands, Categories)
+# Place dynamic routes BEFORE generic file resolution
+# ================================================================
+RewriteRule ^product/([a-zA-Z0-9-]+)/?$ product-detail.php?slug=$1 [L,QSA]
+RewriteRule ^brand/([a-zA-Z0-9-]+)/?$ brand-detail.php?slug=$1 [L,QSA]
+RewriteRule ^category/([a-zA-Z0-9-]+)/?$ products.php?category=$1 [L,QSA]
+
+# ================================================================
+# 8. INTERNAL REWRITE: Serve .php files for clean URLs
+# Works for root files (/hash) AND subdirectories (/admin/hash)
+# ================================================================
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^(.*)$ $1.php [L]
+
+# ================================================================
+# 9. SECURITY – PROTECT SENSITIVE FILES
+# ================================================================
+<IfModule mod_authz_core.c>
+    # Block hidden files (.env, .git, etc.)
+    <FilesMatch "^\.">
+        Require all denied
+    </FilesMatch>
+    
+    # Block config & sensitive files
+    <FilesMatch "\.(env|json|lock|config\.php|database\.php)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+# Block access to the /includes directory (Alternative to <Directory>)
+RewriteRule ^includes/ - [F,L]
+
+# ================================================================
+# 10. PERFORMANCE – CACHE STATIC ASSETS
+# ================================================================
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType application/x-javascript "access plus 1 month"
+</IfModule>
+
+# ================================================================
+# 11. CUSTOM ERROR PAGES & DIRECTORY LISTING
+# ================================================================
+ErrorDocument 404 /404.php
+ErrorDocument 403 /403.php
+
+Options -Indexes

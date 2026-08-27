@@ -1,0 +1,717 @@
+/* ============================================================
+   HERO SECTION
+   ============================================================ */
+.hero-section .badge {
+    background: #e63946 !important;
+}
+
+/* ============================================================
+   CATEGORY CARDS
+   ============================================================ */
+
+  .category-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+  }
+  .category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.12) !important;
+  }
+  .category-img-wrapper {
+    position: relative;
+    height: 340px;
+    overflow: hidden;
+    background-color: #f1f3f5;
+  }
+  .category-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+  .category-card:hover .category-img {
+    transform: scale(1.08);
+  }
+  .category-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 60%);
+  }
+
+/* ============================================================
+   PRODUCT CARDS
+   ============================================================ */
+/* ============================================================
+   PRODUCT CARD – UPDATED
+   ============================================================ */
+.product-card {
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.product-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.12) !important;
+}
+
+.product-card .card-body h5 a {
+    transition: color 0.2s ease;
+}
+
+.product-card .card-body h5 a:hover {
+    color: #e63946 !important;
+}
+
+/* Color swatches */
+.product-card .color-swatch {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+    cursor: default;
+}
+
+.product-card .color-swatch:hover {
+    transform: scale(1.2);
+}
+
+/* Size badges */
+.product-card .size-badge {
+    font-size: 0.65rem;
+    background: #f1f3f5;
+    padding: 0.1rem 0.5rem;
+    border-radius: 4px;
+    color: #495057;
+    font-weight: 500;
+}
+
+/* Featured badge */
+.product-card .featured-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #e63946;
+    color: #fff;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    z-index: 2;
+}
+
+/* Stock badge */
+.product-card .stock-badge {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    z-index: 2;
+}
+
+.product-card .stock-badge.in-stock {
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+}
+
+.product-card .stock-badge.out-of-stock {
+    background: #dc3545;
+    color: #fff;
+}
+
+/* ============================================================
+   TRUST BAR ICONS
+   ============================================================ */
+section.py-4 .col-md-3 {
+    padding: 0.75rem 0;
+}
+
+/* ============================================================
+   RESPONSIVE TWEAKS
+   ============================================================ */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 60px 0 40px 0 !important;
+    }
+    
+    .hero-section h1 {
+        font-size: 2rem !important;
+    }
+    
+    .hero-section .btn {
+        padding: 0.6rem 1.5rem !important;
+        font-size: 0.9rem !important;
+    }
+    
+    .display-6 {
+        font-size: 1.75rem !important;
+    }
+}
+
+/* ============================================================
+   HERO SECTION – BIG CHARACTER, BOTTOM-ALIGNED
+   ============================================================ */
+
+.hero-section {
+    min-height: 92vh; /* Takes up almost full viewport height */
+    display: flex;
+    align-items: flex-end; /* Aligns content to the bottom */
+    overflow: hidden; /* Prevents horizontal scroll if image is wider */
+    padding-bottom: 0 !important;
+}
+
+/* Slide-up animation */
+@keyframes slideUpFade {
+    0% {
+        opacity: 0;
+        transform: translateY(100px) scale(0.92);
+    }
+    60% {
+        opacity: 1;
+        transform: translateY(-10px) scale(1.01);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Character image – bottom-aligned and large */
+.hero-character {
+    display: block;
+    animation: slideUpFade 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    transform-origin: bottom center;
+    will-change: transform, opacity;
+    max-height: 92vh;
+    width: auto;
+    max-width: 130%; /* Allows image to spill over container edges */
+    object-fit: contain;
+    object-position: bottom center;
+    margin: 0 auto;
+    filter: drop-shadow(0 40px 80px rgba(0,0,0,0.7));
+}
+
+/* Remove any gap at the bottom of the image */
+.hero-image-wrapper {
+    line-height: 0;
+    font-size: 0;
+    margin-bottom: -8px;
+}
+
+/* Character hover – subtle float effect */
+.hero-character:hover {
+    animation: slideUpFade 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+               float 4s ease-in-out 1.5s infinite;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+/* ============================================================
+   RESPONSIVE – TABLET
+   ============================================================ */
+@media (max-width: 992px) {
+    .hero-section {
+        min-height: auto;
+        padding: 40px 0 0 0 !important;
+        align-items: center;
+    }
+    
+    .hero-section .display-4 {
+        font-size: 2.4rem !important;
+    }
+    
+    .hero-section .lead {
+        font-size: 1rem !important;
+    }
+    
+    .hero-section .btn {
+        padding: 0.6rem 1.8rem !important;
+        font-size: 0.95rem !important;
+    }
+    
+    .hero-character {
+        max-height: 60vh !important;
+        max-width: 100% !important;
+        animation: slideUpFade 0.9s ease-out forwards;
+    }
+    
+    .hero-image-wrapper {
+        margin-bottom: 0 !important;
+        min-height: 300px !important;
+    }
+    
+    .col-lg-5 {
+        padding-bottom: 20px !important;
+    }
+}
+
+/* ============================================================
+   RESPONSIVE – MOBILE
+   ============================================================ */
+@media (max-width: 576px) {
+    .hero-section {
+        padding: 20px 0 0 0 !important;
+    }
+    
+    .hero-section .display-4 {
+        font-size: 1.8rem !important;
+    }
+    
+    .hero-section .lead {
+        font-size: 0.9rem !important;
+    }
+    
+    .hero-section .btn {
+        padding: 0.5rem 1.2rem !important;
+        font-size: 0.85rem !important;
+    }
+    
+    .hero-character {
+        max-height: 50vh !important;
+        max-width: 100% !important;
+    }
+    
+    .hero-image-wrapper {
+        min-height: 200px !important;
+    }
+    
+    .trust-indicators {
+        font-size: 0.8rem !important;
+    }
+}
+/* ============================================================
+   STORES SECTION – BOTSWANA LOCATIONS
+   ============================================================ */
+
+.stores-section {
+    margin: 0;
+    padding: 60px 0 0 0;
+    border-top: 3px solid #e63946;
+}
+
+/* Store card hover effects */
+.store-card {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 2rem 1.5rem;
+    height: 100%;
+    transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    cursor: default;
+    text-align: left;
+}
+
+.store-card:hover {
+    transform: translateY(-8px);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(230, 57, 70, 0.4);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.store-card .store-icon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+    display: inline-block;
+    background: rgba(230, 57, 70, 0.15);
+    padding: 0.5rem 0.8rem;
+    border-radius: 12px;
+    color: #e63946;
+    transition: all 0.3s ease;
+}
+
+.store-card:hover .store-icon {
+    background: rgba(230, 57, 70, 0.25);
+    transform: scale(1.05);
+}
+
+.store-card h5 {
+    color: #ffffff;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    font-size: 1.2rem;
+}
+
+.store-card .store-location {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+}
+
+.store-card .store-detail {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.store-card .store-detail i {
+    color: #e63946;
+    width: 20px;
+    text-align: center;
+    margin-right: 6px;
+}
+
+/* CTA Button */
+.btn-danger {
+    background: #e63946;
+    border: none;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(230, 57, 70, 0.3);
+}
+
+.btn-danger:hover {
+    background: #c62836;
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(230, 57, 70, 0.4);
+}
+
+/* ============================================================
+   RESPONSIVE – STORES SECTION
+   ============================================================ */
+
+@media (max-width: 768px) {
+    .stores-section {
+        padding: 40px 0 0 0 !important;
+    }
+    
+    .stores-section .display-5 {
+        font-size: 1.8rem !important;
+    }
+    
+    .stores-section .lead {
+        font-size: 0.95rem !important;
+    }
+    
+    .store-card {
+        padding: 1.5rem 1rem !important;
+        text-align: center !important;
+    }
+    
+    .store-card .store-icon {
+        display: block;
+        margin: 0 auto 0.75rem auto;
+        width: fit-content;
+    }
+    
+    .store-card .store-detail {
+        font-size: 0.85rem !important;
+    }
+    
+    .store-card .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    .stores-section .display-5 {
+        font-size: 1.5rem !important;
+    }
+    
+    .store-card h5 {
+        font-size: 1.1rem !important;
+    }
+    
+    .store-card .store-detail {
+        font-size: 0.8rem !important;
+    }
+}
+
+/* ============================================================
+   PRICE RANGE SLIDER
+   ============================================================ */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: #dee2e6;
+    border-radius: 10px;
+    outline: none;
+    transition: background 0.2s;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #e63946;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #e63946;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+input[type="range"]:focus {
+    outline: none;
+}
+
+input[type="range"]:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.3);
+}
+
+/* ============================================================
+   RELATED PRODUCTS CARD HOVER
+   ============================================================ */
+.related-products .product-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.related-products .product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.10) !important;
+}
+
+.related-products .product-card .card-body h6 a:hover {
+    color: #e63946 !important;
+}
+
+.related-products .product-card img {
+    transition: transform 0.3s ease;
+}
+
+.related-products .product-card:hover img {
+    transform: scale(1.04);
+}
+
+/********************************************************************HEADER STYLINGS START**************************************************************************/
+
+/* ============================================================
+   RESET & BASE STYLES
+   ============================================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #1a1a2e;
+    background: #ffffff;
+    line-height: 1.6;
+}
+
+/* ============================================================
+   NAVIGATION – JAVLIN INSPIRED
+   ============================================================ */
+.main-header {
+    background: #ffffff;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* Brand / Logo */
+.navbar-brand {
+    font-weight: 800;
+    font-size: 1.6rem;
+    letter-spacing: -0.5px;
+    color: #0a1628;
+    text-transform: uppercase;
+}
+
+/* Nav links */
+.nav-link {
+    color: #1a1a2e !important;
+    font-weight: 500;
+    padding: 1.5rem 0.9rem !important;
+    transition: color 0.2s ease, border-bottom 0.2s ease;
+    border-bottom: 3px solid transparent;
+    position: relative;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: #e63946 !important;
+    border-bottom-color: #e63946;
+}
+
+/* Dropdown menu */
+.dropdown-menu {
+    border-radius: 0;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    padding: 0.5rem 0;
+    margin-top: 0;
+}
+
+.dropdown-item {
+    padding: 0.6rem 1.5rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: #1a1a2e;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background: #f8f9fa;
+    color: #e63946;
+}
+
+.dropdown-item i {
+    width: 20px;
+    color: #6c757d;
+}
+
+.dropdown-item:hover i {
+    color: #e63946;
+}
+
+/* Mobile adjustments */
+@media (max-width: 991.98px) {
+    .nav-link {
+        padding: 0.6rem 0 !important;
+        border-bottom: none;
+    }
+    
+    .nav-link:hover,
+    .nav-link.active {
+        border-bottom: none;
+    }
+    
+    .navbar-nav {
+        padding: 0.5rem 0;
+    }
+}
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+.top-bar {
+    background: #0a1628;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    border-bottom: 2px solid #e63946;
+}
+
+.top-bar a {
+    color: rgba(255, 255, 255, 0.7);
+    transition: color 0.2s ease;
+}
+
+.top-bar a:hover {
+    color: #ffffff;
+}
+
+/* ============================================================
+   BREADCRUMB
+   ============================================================ */
+.breadcrumb {
+    font-size: 0.85rem;
+}
+
+.breadcrumb-item a {
+    color: #0a1628;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.breadcrumb-item a:hover {
+    color: #e63946;
+}
+
+.breadcrumb-item.active {
+    color: #6c757d;
+}
+
+/* ============================================================
+   UTILITY CLASSES
+   ============================================================ */
+.text-kit-red {
+    color: #e63946;
+}
+
+.text-kit-blue {
+    color: #0a1628;
+}
+
+.bg-kit-dark {
+    background: #0a1628;
+}
+
+.bg-kit-red {
+    background: #e63946;
+}
+
+.btn-kit-red {
+    background: #e63946;
+    color: #ffffff;
+    border: none;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.btn-kit-red:hover {
+    background: #c62836;
+    color: #ffffff;
+    transform: translateY(-2px);
+}
+
+.btn-kit-outline {
+    border: 2px solid #e63946;
+    color: #e63946;
+    background: transparent;
+    transition: all 0.3s ease;
+}
+
+.btn-kit-outline:hover {
+    background: #e63946;
+    color: #ffffff;
+}
+
+/* ============================================================
+   RESPONSIVE HELPERS
+   ============================================================ */
+@media (max-width: 576px) {
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+    
+    .top-bar {
+        font-size: 0.7rem;
+    }
+    
+    .top-bar .row > div {
+        text-align: center !important;
+    }
+}
+
+/* Search input focus */
+.form-control:focus {
+    border-color: #e63946;
+    box-shadow: 0 0 0 0.2rem rgba(230, 57, 70, 0.15);
+}
+
+/* Badge cart */
+.badge.bg-danger {
+    background: #e63946 !important;
+}
