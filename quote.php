@@ -40,9 +40,6 @@ if (isset($_SESSION['quote']) && !empty($_SESSION['quote'])) {
     }
 }
 
-// Sort quote items (optional)
-// usort($quote_items, function($a, $b) { return strcmp($a['product']['name'], $b['product']['name']); });
-
 $page_title = "My Quote – Kit Group";
 $page_desc = "Review your quote request for PPE and workwear products.";
 
@@ -62,7 +59,7 @@ include 'templates/header.php';
             <div class="col-lg-8">
                 <h1 class="display-4 fw-bold mb-3">My Quote</h1>
                 <p class="lead mb-0" style="opacity: 0.9;">
-                    Review your selected items and request a quote.
+                    Review your selected items and print your quote.
                 </p>
             </div>
             <div class="col-lg-4 mt-3 mt-lg-0 text-end">
@@ -94,7 +91,7 @@ include 'templates/header.php';
         <?php else: ?>
             <!-- Quote items -->
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table table-hover" id="quoteTable">
                     <thead class="table-light">
                         <tr>
                             <th style="width:50px;">#</th>
@@ -120,17 +117,17 @@ include 'templates/header.php';
                                 <td><?= htmlspecialchars($item['color']) ?></td>
                                 <td><?= htmlspecialchars($item['size']) ?></td>
                                 <td><?= htmlspecialchars($item['sku']) ?></td>
-                                <td>P <?= number_format($item['price'], 2) ?></td>
+                                <td class="item-price">P <?= number_format($item['price'], 2) ?></td>
                                 <td>
                                     <form action="quote-update.php" method="post" class="d-flex gap-1">
                                         <input type="hidden" name="key" value="<?= htmlspecialchars($item['key']) ?>">
-                                        <input type="number" name="quantity" value="<?= $item['quantity'] ?>" min="0" max="999" class="form-control form-control-sm" style="width: 70px;">
-                                        <button type="submit" class="btn btn-sm btn-primary" title="Update quantity">
+                                        <input type="number" name="quantity" value="<?= $item['quantity'] ?>" min="0" max="999" class="form-control form-control-sm quantity-input" style="width: 70px;" data-price="<?= $item['price'] ?>">
+                                        <button type="submit" class="btn btn-sm btn-primary update-quantity-btn" title="Update quantity">
                                             <i class="bi bi-arrow-repeat"></i>
                                         </button>
                                     </form>
                                 </td>
-                                <td>P <?= number_format($item['subtotal'], 2) ?></td>
+                                <td class="item-subtotal">P <?= number_format($item['subtotal'], 2) ?></td>
                                 <td>
                                     <a href="quote-remove.php?key=<?= urlencode($item['key']) ?>" class="btn btn-sm btn-danger" onclick="return confirm('Remove this item?')">
                                         <i class="bi bi-x-lg"></i>
@@ -142,7 +139,7 @@ include 'templates/header.php';
                     <tfoot class="table-light">
                         <tr>
                             <td colspan="6" class="text-end fw-bold">Total</td>
-                            <td colspan="2" class="fw-bold">P <?= number_format($total, 2) ?></td>
+                            <td colspan="2" class="fw-bold" id="grandTotal">P <?= number_format($total, 2) ?></td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -160,9 +157,6 @@ include 'templates/header.php';
                 <a href="quote-print.php" target="_blank" class="btn btn-primary" style="border-radius: 50px; background: #0a1628; border: none;">
                     <i class="bi bi-printer me-2"></i> Print Quote
                 </a>
-                <a href="quote-submit.php" class="btn btn-danger" style="border-radius: 50px; background: #e63946; border: none; font-weight: 600;">
-                    <i class="bi bi-send me-2"></i> Request Quote
-                </a>
             </div>
             
             <!-- Quote notes -->
@@ -177,5 +171,87 @@ include 'templates/header.php';
         <?php endif; ?>
     </div>
 </section>
+
+<!-- ============================================================
+     JAVASCRIPT – LIVE QUANTITY UPDATE
+     ============================================================ -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ============================================================
+    // LIVE QUANTITY UPDATE (without page reload)
+    // ============================================================
+    const quantityInputs = document.querySelectorAll('.quantity-input');
+    const updateButtons = document.querySelectorAll('.update-quantity-btn');
+    
+    // Auto-update when quantity changes (on blur)
+    quantityInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            updateQuantity(this);
+        });
+        
+        // Also update on Enter key
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                updateQuantity(this);
+            }
+        });
+    });
+    
+    // Also handle button clicks
+    updateButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const form = this.closest('form');
+            const input = form.querySelector('.quantity-input');
+            updateQuantity(input);
+        });
+    });
+    
+    function updateQuantity(input) {
+        const form = input.closest('form');
+        const key = form.querySelector('input[name="key"]').value;
+        const quantity = parseInt(input.value) || 0;
+        const price = parseFloat(input.dataset.price) || 0;
+        const row = input.closest('tr');
+        const subtotalCell = row.querySelector('.item-subtotal');
+        const grandTotalCell = document.getElementById('grandTotal');
+        
+        if (quantity < 0) {
+            alert('Quantity cannot be negative.');
+            input.value = 0;
+            return;
+        }
+        
+        // Update subtotal for this row
+        const subtotal = price * quantity;
+        subtotalCell.textContent = 'P ' + subtotal.toFixed(2);
+        
+        // Update grand total
+        let newTotal = 0;
+        document.querySelectorAll('.item-subtotal').forEach(cell => {
+            const val = cell.textContent.replace('P ', '').replace(',', '');
+            newTotal += parseFloat(val) || 0;
+        });
+        grandTotalCell.textContent = 'P ' + newTotal.toFixed(2);
+        
+        // Submit the form to update session (background AJAX)
+        const formData = new FormData(form);
+        fetch('/kitgroup/quote-update.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                // Session updated successfully
+                console.log('Quote updated');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating quote:', error);
+        });
+    }
+});
+</script>
 
 <?php include 'templates/footer.php'; ?>
