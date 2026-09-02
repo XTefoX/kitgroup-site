@@ -94,6 +94,67 @@ include 'templates/header.php';
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
+
+                <!-- ============================================================
+                     USUALLY BOUGHT WITH (Under Product Images)
+                     ============================================================ -->
+                <?php 
+                $usually_bought_with = getUsuallyBoughtWith($product['id'], 4);
+                if (!empty($usually_bought_with)): 
+                ?>
+                <div class="mt-4">
+                    <div class="card shadow-sm" style="border: none; border-radius: 12px; background: #f8f9fa; border-left: 4px solid #e63946;">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3" style="color: #1a1a2e;">
+                                <i class="bi bi-link-45deg me-2" style="color: #e63946;"></i> Usually Bought With
+                            </h6>
+                            <div class="row g-2">
+                                <?php foreach ($usually_bought_with as $related): 
+                                    $rel_image = $related['default_image'] ?? null;
+                                    $rel_stock_tag = getProductStockTag($related['id']);
+                                ?>
+                                    <div class="col-6 col-md-3">
+                                        <a href="/kitgroup/product/<?= htmlspecialchars($related['slug']) ?>" class="text-decoration-none">
+                                            <div class="card h-100" style="border: none; border-radius: 8px; overflow: hidden; transition: transform 0.2s;">
+                                                <div style="background: #fff; height: 100px; overflow: hidden; position: relative;">
+                                                    <?php if ($rel_image): ?>
+                                                        <img src="/kitgroup/assets/images/products/<?= htmlspecialchars($rel_image) ?>" 
+                                                             alt="<?= htmlspecialchars($related['name']) ?>" 
+                                                             style="width: 100%; height: 100%; object-fit: cover;">
+                                                    <?php else: ?>
+                                                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #dee2e6;">
+                                                            <i class="bi bi-image" style="font-size: 2rem;"></i>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                    <?php if ($related['is_made_in_botswana']): ?>
+                                                        <span style="position: absolute; top: 4px; right: 4px; background: #28a745; color: #fff; padding: 0.1rem 0.4rem; border-radius: 50px; font-size: 0.5rem; font-weight: 600;">
+                                                            <i class="bi bi-flag"></i>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="card-body p-2">
+                                                    <p class="card-text small mb-0" style="font-weight: 500; color: #1a1a2e; line-height: 1.2;">
+                                                        <?= htmlspecialchars($related['name']) ?>
+                                                    </p>
+                                                    <div class="d-flex justify-content-between align-items-center mt-1">
+                                                        <span class="small fw-bold" style="color: #1a1a2e;">
+                                                            P <?= number_format($related['min_price'] ?? 0, 2) ?>
+                                                        </span>
+                                                        <span class="small" style="color: <?= $rel_stock_tag['class'] === 'text-success' ? '#28a745' : '#ffc107' ?>;">
+                                                            <i class="bi <?= $rel_stock_tag['icon'] ?>"></i>
+                                                            <?= $rel_stock_tag['label'] ?>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
 
             <!-- ====== PRODUCT INFO ====== -->
@@ -298,7 +359,7 @@ include 'templates/header.php';
                 <div class="row g-4">
                     <?php foreach ($related_products as $related): 
                         $default_image = $related['default_image'] ?? null;
-                        $in_stock = $related['total_stock'] > 0;
+                        $stock_tag = getProductStockTag($related['id']);
                     ?>
                         <div class="col-md-6 col-lg-3">
                             <div class="card h-100 shadow-sm product-card" style="border: none; border-radius: 12px; transition: all 0.3s ease; overflow: hidden;">
@@ -321,16 +382,18 @@ include 'templates/header.php';
                                         </span>
                                     <?php endif; ?>
                                     
-                                    <!-- Stock badge -->
-                                    <?php if ($in_stock): ?>
-                                        <span style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #fff; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.6rem; z-index: 2;">
-                                            <?= $related['total_stock'] ?> in stock
-                                        </span>
-                                    <?php else: ?>
-                                        <span style="position: absolute; bottom: 10px; right: 10px; background: #dc3545; color: #fff; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.6rem; z-index: 2;">
-                                            Out of stock
+                                    <!-- Made in Botswana badge -->
+                                    <?php if ($related['is_made_in_botswana']): ?>
+                                        <span style="position: absolute; top: 10px; right: 10px; background: #28a745; color: #fff; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.6rem; font-weight: 600; z-index: 2;">
+                                            <i class="bi bi-flag"></i> Local
                                         </span>
                                     <?php endif; ?>
+                                    
+                                    <!-- Stock badge -->
+                                    <span style="position: absolute; bottom: 10px; right: 10px; background: <?= $stock_tag['bg'] ?>; color: #fff; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.6rem; z-index: 2;">
+                                        <i class="bi <?= $stock_tag['icon'] ?> me-1"></i>
+                                        <?= $stock_tag['label'] ?>
+                                    </span>
                                 </div>
                                 
                                 <div class="card-body">
@@ -530,41 +593,44 @@ document.addEventListener('DOMContentLoaded', function() {
         updateVariantInfo();
     }
 });
+
 // ============================================================
 // ADD TO QUOTE
 // ============================================================
-const addToQuoteBtn = document.getElementById('add-to-quote-btn');
+document.addEventListener('DOMContentLoaded', function() {
+    const addToQuoteBtn = document.getElementById('add-to-quote-btn');
 
-if (addToQuoteBtn) {
-    addToQuoteBtn.addEventListener('click', function() {
-        // Get selected color and size
-        const activeColor = document.querySelector('.variant-color.active');
-        const activeSize = document.querySelector('.variant-size.active');
-        
-        if (!activeColor || !activeSize) {
-            alert('Please select a color and size.');
-            return;
-        }
-        
-        const color = activeColor.dataset.color;
-        const size = activeSize.dataset.size;
-        const productId = <?= (int)$product['id'] ?>;
-        
-        // Optional: Ask for quantity
-        const quantity = prompt('Enter quantity:', '1');
-        if (quantity === null) return; // User cancelled
-        if (isNaN(quantity) || parseInt(quantity) < 1) {
-            alert('Please enter a valid quantity.');
-            return;
-        }
-        
-        // Build URL
-        const url = `/kitgroup/quote-add.php?product_id=${productId}&size=${encodeURIComponent(size)}&color=${encodeURIComponent(color)}&quantity=${parseInt(quantity)}`;
-        
-        // Redirect to add to quote
-        window.location.href = url;
-    });
-}
+    if (addToQuoteBtn) {
+        addToQuoteBtn.addEventListener('click', function() {
+            // Get selected color and size
+            const activeColor = document.querySelector('.variant-color.active');
+            const activeSize = document.querySelector('.variant-size.active');
+            
+            if (!activeColor || !activeSize) {
+                alert('Please select a color and size.');
+                return;
+            }
+            
+            const color = activeColor.dataset.color;
+            const size = activeSize.dataset.size;
+            const productId = <?= (int)$product['id'] ?>;
+            
+            // Optional: Ask for quantity
+            const quantity = prompt('Enter quantity:', '1');
+            if (quantity === null) return; // User cancelled
+            if (isNaN(quantity) || parseInt(quantity) < 1) {
+                alert('Please enter a valid quantity.');
+                return;
+            }
+            
+            // Build URL
+            const url = `/kitgroup/quote-add.php?product_id=${productId}&size=${encodeURIComponent(size)}&color=${encodeURIComponent(color)}&quantity=${parseInt(quantity)}`;
+            
+            // Redirect to add to quote
+            window.location.href = url;
+        });
+    }
+});
 </script>
 
 <?php include 'templates/footer.php'; ?>

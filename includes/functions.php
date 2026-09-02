@@ -2,11 +2,8 @@
 // includes/functions.php
 
 // ============================================================
-// DATABASE CONNECTION (if not already in db.php)
+// DATABASE CONNECTION
 // ============================================================
-// Assumes db.php is included elsewhere, but we'll include it here
-// for safety. If you have db.php, you can remove this part.
-
 require_once __DIR__ . '/db.php';
 
 // ============================================================
@@ -66,6 +63,8 @@ function getProducts($category_slug = null, $brand_slug = null, $limit = null) {
     $pdo = getDB();
     $sql = "SELECT 
                 p.*,
+                p.is_made_in_botswana,
+                p.is_orderable,
                 b.name as brand_name,
                 b.slug as brand_slug,
                 c.name as category_name,
@@ -75,7 +74,7 @@ function getProducts($category_slug = null, $brand_slug = null, $limit = null) {
                 (SELECT SUM(stock) FROM product_variants WHERE product_id = p.id AND is_active = 1) as total_stock,
                 (SELECT image_url FROM product_color_images WHERE product_id = p.id AND is_primary = 1 LIMIT 1) as default_image,
                 GROUP_CONCAT(DISTINCT pci.color ORDER BY pci.sort_order) as colors,
-                GROUP_CONCAT(DISTINCT pv.size ORDER BY FIELD(pv.size, 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL')) as sizes
+                GROUP_CONCAT(DISTINCT pv.size ORDER BY FIELD(pv.size, 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', 'Universal')) as sizes
             FROM products p
             JOIN brands b ON p.brand_id = b.id
             JOIN categories c ON p.category_id = c.id
@@ -114,6 +113,8 @@ function getProductBySlug($slug) {
     $pdo = getDB();
     $sql = "SELECT 
                 p.*,
+                p.is_made_in_botswana,
+                p.is_orderable,
                 b.name as brand_name,
                 b.slug as brand_slug,
                 b.logo as brand_logo,
@@ -247,8 +248,8 @@ function addProduct($data) {
     try {
         // Insert product
         $stmt = $pdo->prepare("INSERT INTO products 
-            (brand_id, category_id, name, slug, description, short_description, featured, is_active) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            (brand_id, category_id, name, slug, description, short_description, featured, is_active, is_made_in_botswana, is_orderable) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([
             $data['brand_id'],
             $data['category_id'],
@@ -257,7 +258,9 @@ function addProduct($data) {
             $data['description'],
             $data['short_description'],
             $data['featured'] ? 1 : 0,
-            $data['is_active'] ? 1 : 0
+            $data['is_active'] ? 1 : 0,
+            $data['is_made_in_botswana'] ? 1 : 0,
+            $data['is_orderable'] ? 1 : 0
         ]);
         $product_id = $pdo->lastInsertId();
 
@@ -275,7 +278,6 @@ function addProduct($data) {
                     $color['is_primary'] ? 1 : 0,
                     $color['sort_order'] ?? 0
                 ]);
-                $color_id = $pdo->lastInsertId();
 
                 // Insert variants for this color
                 if (isset($color['sizes']) && is_array($color['sizes'])) {
@@ -309,10 +311,10 @@ function updateProduct($id, $data) {
     $pdo = getDB();
     $pdo->beginTransaction();
     try {
-        // Update product
+        // Update product with new fields
         $stmt = $pdo->prepare("UPDATE products SET 
             brand_id=?, category_id=?, name=?, slug=?, description=?, short_description=?, 
-            featured=?, is_active=? WHERE id=?");
+            featured=?, is_active=?, is_made_in_botswana=?, is_orderable=? WHERE id=?");
         $stmt->execute([
             $data['brand_id'],
             $data['category_id'],
@@ -322,11 +324,12 @@ function updateProduct($id, $data) {
             $data['short_description'],
             $data['featured'] ? 1 : 0,
             $data['is_active'] ? 1 : 0,
+            $data['is_made_in_botswana'] ? 1 : 0,
+            $data['is_orderable'] ? 1 : 0,
             $id
         ]);
 
         // Delete existing colors and variants (cascade on DB, but we need to handle images)
-        // We'll delete image files manually later
         // First get existing color images to delete files
         $stmt = $pdo->prepare("SELECT image_url FROM product_color_images WHERE product_id=?");
         $stmt->execute([$id]);
@@ -358,7 +361,6 @@ function updateProduct($id, $data) {
                     $color['is_primary'] ? 1 : 0,
                     $color['sort_order'] ?? 0
                 ]);
-                $color_id = $pdo->lastInsertId();
 
                 if (isset($color['sizes']) && is_array($color['sizes'])) {
                     foreach ($color['sizes'] as $size) {
@@ -432,6 +434,7 @@ function uploadImage($file, $target_dir, $prefix = '') {
     }
     return null;
 }
+
 // ============================================================
 // BRAND & CATEGORY IMAGE HELPERS
 // ============================================================
@@ -471,7 +474,7 @@ function uploadBrandImage($file, $prefix = 'brand') {
     
     // Validate type
     if (!validateImageType($file)) {
-        return null; // or throw exception
+        return null;
     }
     
     $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
@@ -492,6 +495,7 @@ function uploadBrandImage($file, $prefix = 'brand') {
     }
     return null;
 }
+
 // ============================================================
 // ADVANCED PRODUCT FILTERING FUNCTIONS
 // ============================================================
@@ -504,6 +508,8 @@ function getFilteredProducts($category_slug = null, $brand_slug = null, $filters
     
     $sql = "SELECT 
                 p.*,
+                p.is_made_in_botswana,
+                p.is_orderable,
                 b.name as brand_name,
                 b.slug as brand_slug,
                 c.name as category_name,
@@ -514,7 +520,7 @@ function getFilteredProducts($category_slug = null, $brand_slug = null, $filters
                 (SELECT SUM(stock) FROM product_variants WHERE product_id = p.id AND is_active = 1) as total_stock,
                 (SELECT image_url FROM product_color_images WHERE product_id = p.id AND is_primary = 1 LIMIT 1) as default_image,
                 GROUP_CONCAT(DISTINCT pci.color ORDER BY pci.sort_order) as colors,
-                GROUP_CONCAT(DISTINCT pv.size ORDER BY FIELD(pv.size, 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL')) as sizes,
+                GROUP_CONCAT(DISTINCT pv.size ORDER BY FIELD(pv.size, 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', 'Universal')) as sizes,
                 GROUP_CONCAT(DISTINCT pv.color) as all_colors
             FROM products p
             JOIN brands b ON p.brand_id = b.id
@@ -605,7 +611,7 @@ function getFilteredProducts($category_slug = null, $brand_slug = null, $filters
 }
 
 // ============================================================
-// COLOR & VARIANT FUNCTIONS (No duplicates)
+// COLOR & VARIANT FUNCTIONS
 // ============================================================
 
 /**
@@ -698,6 +704,11 @@ function getAllSizes() {
     $stmt = $pdo->query("SELECT DISTINCT size FROM product_variants WHERE is_active = 1 ORDER BY FIELD(size, 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', 'Universal')");
     return $stmt->fetchAll(PDO::FETCH_COLUMN);
 }
+
+// ============================================================
+// CATEGORY TREE & FILTER HELPERS
+// ============================================================
+
 /**
  * Get categories with parent-child relationship for display
  */
@@ -759,6 +770,10 @@ function buildFilterUrl($filter_type, $value) {
     return '/kitgroup/products' . ($query ? '?' . $query : '');
 }
 
+// ============================================================
+// FEATURED PRODUCTS
+// ============================================================
+
 /**
  * Get featured products for homepage
  */
@@ -766,6 +781,8 @@ function getFeaturedProducts($limit = 6) {
     $pdo = getDB();
     $sql = "SELECT 
                 p.*,
+                p.is_made_in_botswana,
+                p.is_orderable,
                 b.name as brand_name,
                 b.slug as brand_slug,
                 c.name as category_name,
@@ -782,6 +799,10 @@ function getFeaturedProducts($limit = 6) {
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+// ============================================================
+// PAGINATION FUNCTIONS
+// ============================================================
 
 /**
  * Get total count of products (for pagination)
@@ -879,6 +900,8 @@ function getProductsPaginated($category_slug = null, $brand_slug = null, $filter
     
     $sql = "SELECT 
                 p.*,
+                p.is_made_in_botswana,
+                p.is_orderable,
                 b.name as brand_name,
                 b.slug as brand_slug,
                 c.name as category_name,
@@ -889,7 +912,7 @@ function getProductsPaginated($category_slug = null, $brand_slug = null, $filter
                 (SELECT SUM(stock) FROM product_variants WHERE product_id = p.id AND is_active = 1) as total_stock,
                 (SELECT image_url FROM product_color_images WHERE product_id = p.id AND is_primary = 1 LIMIT 1) as default_image,
                 GROUP_CONCAT(DISTINCT pci.color ORDER BY pci.sort_order) as colors,
-                GROUP_CONCAT(DISTINCT pv.size ORDER BY FIELD(pv.size, 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL')) as sizes
+                GROUP_CONCAT(DISTINCT pv.size ORDER BY FIELD(pv.size, 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', 'Universal')) as sizes
             FROM products p
             JOIN brands b ON p.brand_id = b.id
             JOIN categories c ON p.category_id = c.id
@@ -985,6 +1008,10 @@ function getProductsPaginated($category_slug = null, $brand_slug = null, $filter
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+// ============================================================
+// RELATED PRODUCTS
+// ============================================================
+
 /**
  * Get related products for a product
  * Shows products from same category first, then same brand
@@ -995,6 +1022,8 @@ function getRelatedProducts($product_id, $category_id, $brand_id, $limit = 4) {
     // First, try to get products from the same category
     $sql = "SELECT 
                 p.*,
+                p.is_made_in_botswana,
+                p.is_orderable,
                 b.name as brand_name,
                 b.slug as brand_slug,
                 (SELECT MIN(price) FROM product_variants WHERE product_id = p.id AND is_active = 1) as min_price,
@@ -1027,6 +1056,8 @@ function getRelatedProducts($product_id, $category_id, $brand_id, $limit = 4) {
         
         $sql2 = "SELECT 
                     p.*,
+                    p.is_made_in_botswana,
+                    p.is_orderable,
                     b.name as brand_name,
                     b.slug as brand_slug,
                     (SELECT MIN(price) FROM product_variants WHERE product_id = p.id AND is_active = 1) as min_price,
@@ -1060,3 +1091,103 @@ function getRelatedProducts($product_id, $category_id, $brand_id, $limit = 4) {
     
     return $related;
 }
+
+// ============================================================
+// STOCK STATUS FUNCTIONS (Simplified)
+// ============================================================
+
+/**
+ * Get product stock status tag (no quantities)
+ */
+function getProductStockTag($product_id) {
+    $pdo = getDB();
+    
+    // Get product info
+    $stmt = $pdo->prepare("SELECT is_orderable, is_made_in_botswana FROM products WHERE id = ?");
+    $stmt->execute([$product_id]);
+    $product = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$product) {
+        return ['label' => 'Unknown', 'class' => 'text-secondary', 'icon' => 'bi-question-circle', 'bg' => 'rgba(108, 117, 125, 0.9)'];
+    }
+    
+    // If product is orderable
+    if ($product['is_orderable']) {
+        return ['label' => 'Orderable', 'class' => 'text-warning', 'icon' => 'bi-clock-fill', 'bg' => 'rgba(255, 193, 7, 0.9)'];
+    }
+    
+    // Check if there's any stock
+    $stmt = $pdo->prepare("SELECT SUM(stock) as total_stock FROM product_variants WHERE product_id = ? AND is_active = 1");
+    $stmt->execute([$product_id]);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($result && $result['total_stock'] > 0) {
+        return ['label' => 'In Store', 'class' => 'text-success', 'icon' => 'bi-check-circle-fill', 'bg' => 'rgba(40, 167, 69, 0.9)'];
+    } else {
+        return ['label' => 'Orderable', 'class' => 'text-warning', 'icon' => 'bi-clock-fill', 'bg' => 'rgba(255, 193, 7, 0.9)'];
+    }
+}
+
+// ============================================================
+// USUALLY BOUGHT WITH (Explicit Pairings)
+// ============================================================
+
+/**
+ * Get products explicitly paired as "Usually Bought With"
+ */
+function getUsuallyBoughtWith($product_id, $limit = 4) {
+    $pdo = getDB();
+    $sql = "SELECT 
+                p.*,
+                p.is_made_in_botswana,
+                p.is_orderable,
+                b.name as brand_name,
+                b.slug as brand_slug,
+                (SELECT MIN(price) FROM product_variants WHERE product_id = p.id AND is_active = 1) as min_price,
+                (SELECT MAX(price) FROM product_variants WHERE product_id = p.id AND is_active = 1) as max_price,
+                (SELECT SUM(stock) FROM product_variants WHERE product_id = p.id AND is_active = 1) as total_stock,
+                (SELECT image_url FROM product_color_images WHERE product_id = p.id AND is_primary = 1 LIMIT 1) as default_image
+            FROM products p
+            JOIN brands b ON p.brand_id = b.id
+            JOIN product_related pr ON p.id = pr.related_product_id
+            WHERE pr.product_id = ? AND p.is_active = 1
+            ORDER BY pr.sort_order ASC, p.name ASC
+            LIMIT ?";
+    
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindValue(1, $product_id, PDO::PARAM_INT);
+    $stmt->bindValue(2, $limit, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Get all related product IDs for a product (for admin)
+ */
+function getRelatedProductIds($product_id) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT related_product_id FROM product_related WHERE product_id = ? ORDER BY sort_order");
+    $stmt->execute([$product_id]);
+    return $stmt->fetchAll(PDO::FETCH_COLUMN);
+}
+
+/**
+ * Save related products for a product
+ */
+function saveRelatedProducts($product_id, $related_ids) {
+    $pdo = getDB();
+    // Delete existing relations
+    $stmt = $pdo->prepare("DELETE FROM product_related WHERE product_id = ?");
+    $stmt->execute([$product_id]);
+    
+    // Insert new relations
+    if (!empty($related_ids) && is_array($related_ids)) {
+        $stmt = $pdo->prepare("INSERT INTO product_related (product_id, related_product_id, sort_order) VALUES (?, ?, ?)");
+        $sort = 0;
+        foreach ($related_ids as $rid) {
+            $stmt->execute([$product_id, $rid, $sort++]);
+        }
+    }
+    return true;
+}
+?>
