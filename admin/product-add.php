@@ -23,6 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'short_description' => trim($_POST['short_description']),
             'featured' => isset($_POST['featured']) ? 1 : 0,
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
+            'is_made_in_botswana' => isset($_POST['is_made_in_botswana']) ? 1 : 0,
+            'is_orderable' => isset($_POST['is_orderable']) ? 1 : 0,
             'colors' => []
         ];
 
@@ -79,6 +81,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Save product
         $product_id = addProduct($product_data);
         if ($product_id) {
+            // ===== SAVE USUALLY BOUGHT WITH =====
+            if (isset($_POST['related_products']) && is_array($_POST['related_products'])) {
+                $related_ids = array_map('intval', $_POST['related_products']);
+                saveRelatedProducts($product_id, $related_ids);
+            }
+            
             $success = true;
             header('Location: product-edit.php?id=' . $product_id . '&msg=added');
             exit;
@@ -159,26 +167,71 @@ require_once __DIR__ . '/templates/header.php';
                         <label class="form-label">Full Description</label>
                         <textarea name="description" class="form-control" rows="5"></textarea>
                     </div>
-                    <div class="col-md-6">
+                    
+                    <!-- ===== CHECKBOXES ROW ===== -->
+                    <div class="col-md-4">
                         <div class="form-check">
                             <input type="checkbox" name="featured" class="form-check-input" id="featured">
                             <label class="form-check-label" for="featured">Featured Product</label>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="form-check">
                             <input type="checkbox" name="is_active" class="form-check-input" id="is_active" checked>
                             <label class="form-check-label" for="is_active">Active</label>
                         </div>
                     </div>
+<<<<<<< HEAD
                     <div class="col-md-6">
                         <div class="form-check">
                             <input type="checkbox" name="is_made_in_botswana" class="form-check-input" id="is_made_in_botswana" <?= isset($product) && $product['is_made_in_botswana'] ? 'checked' : '' ?>>
+=======
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input type="checkbox" name="is_made_in_botswana" class="form-check-input" id="is_made_in_botswana">
+>>>>>>> 28ddb57b97b4bbfe9b7141303919f30aa214af9e
                             <label class="form-check-label" for="is_made_in_botswana">
                                 <span class="badge bg-success"><i class="bi bi-flag"></i> Made in Botswana</span>
                             </label>
                         </div>
                     </div>
+<<<<<<< HEAD
+=======
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input type="checkbox" name="is_orderable" class="form-check-input" id="is_orderable">
+                            <label class="form-check-label" for="is_orderable">
+                                <span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> Orderable (No Stock Kept)</span>
+                            </label>
+                            <div class="form-text">Check this if the product is only available on order.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== USUALLY BOUGHT WITH ====== -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <i class="bi bi-link-45deg me-2"></i> Usually Bought With
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Select products that are <strong>explicitly paired</strong> with this product (e.g., a shoe with a specific sock).</p>
+                <div class="row">
+                    <div class="col-md-12">
+                        <select name="related_products[]" class="form-select" multiple style="height: 200px;">
+                            <?php 
+                            $all_products = getProducts();
+                            foreach ($all_products as $p):
+                            ?>
+                                <option value="<?= $p['id'] ?>">
+                                    <?= htmlspecialchars($p['name']) ?> (<?= htmlspecialchars($p['brand_name']) ?>)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <small class="text-muted">Hold Ctrl (Cmd on Mac) to select multiple products.</small>
+                    </div>
+>>>>>>> 28ddb57b97b4bbfe9b7141303919f30aa214af9e
                 </div>
             </div>
         </div>
