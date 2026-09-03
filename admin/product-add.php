@@ -171,6 +171,14 @@ require_once __DIR__ . '/templates/header.php';
                             <label class="form-check-label" for="is_active">Active</label>
                         </div>
                     </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input type="checkbox" name="is_made_in_botswana" class="form-check-input" id="is_made_in_botswana" <?= isset($product) && $product['is_made_in_botswana'] ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="is_made_in_botswana">
+                                <span class="badge bg-success"><i class="bi bi-flag"></i> Made in Botswana</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -491,6 +499,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="form-check">
                     <input type="checkbox" name="size_active[${colorIndex}][]" class="form-check-input" ${isActive ? 'checked' : ''}>
                     <label class="form-check-label">Active</label>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="form-check">
+                    <input type="checkbox" name="size_orderable[<?= $colorIndex ?>][]" class="form-check-input" <?= $sizeData['is_orderable'] ?? false ? 'checked' : '' ?>>
+                    <label class="form-check-label" title="Orderable when out of stock">Orderable</label>
                 </div>
             </div>
             <div class="col-md-1">

@@ -1060,3 +1060,114 @@ function getRelatedProducts($product_id, $category_id, $brand_id, $limit = 4) {
     
     return $related;
 }
+
+// ============================================================
+// MADE IN BOTSWANA / STOCK STATUS FUNCTIONS
+// ============================================================
+
+/**
+ * Get stock status label for a variant
+ */
+function getStockStatus($stock, $is_orderable) {
+    if ($stock > 0) {
+        return ['label' => 'In Stock', 'class' => 'text-success', 'icon' => 'bi-check-circle-fill'];
+    } elseif ($is_orderable) {
+        return ['label' => 'Orderable', 'class' => 'text-warning', 'icon' => 'bi-clock-fill'];
+    } else {
+        return ['label' => 'Out of Stock', 'class' => 'text-danger', 'icon' => 'bi-x-circle-fill'];
+    }
+}
+
+/**
+ * Check if product has any in-stock variants
+ */
+function hasInStockVariants($product_id) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM product_variants WHERE product_id = ? AND stock > 0 AND is_active = 1");
+    $stmt->execute([$product_id]);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $result['count'] > 0;
+}
+
+/**
+ * Check if product has any orderable variants
+ */
+function hasOrderableVariants($product_id) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM product_variants WHERE product_id = ? AND stock = 0 AND is_orderable = 1 AND is_active = 1");
+    $stmt->execute([$product_id]);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $result['count'] > 0;
+}
+
+/**
+ * Get overall product stock status
+ */
+function getProductStockStatus($product_id) {
+    if (hasInStockVariants($product_id)) {
+        return ['label' => 'In Stock', 'class' => 'text-success', 'icon' => 'bi-check-circle-fill'];
+    } elseif (hasOrderableVariants($product_id)) {
+        return ['label' => 'Orderable', 'class' => 'text-warning', 'icon' => 'bi-clock-fill'];
+    } else {
+        return ['label' => 'Out of Stock', 'class' => 'text-danger', 'icon' => 'bi-x-circle-fill'];
+    }
+}
+
+// ============================================================
+// USUALLY SOLD WITH (RELATED PRODUCTS)
+// ============================================================
+
+/**
+ * Get related products for a given product
+ */
+function getRelatedProductsForProduct($product_id, $limit = 4) {
+    $pdo = getDB();
+    $sql = "SELECT 
+                p.*,
+                b.name as brand_name,
+                b.slug as brand_slug,
+                (SELECT MIN(price) FROM product_variants WHERE product_id = p.id AND is_active = 1) as min_price,
+                (SELECT MAX(price) FROM product_variants WHERE product_id = p.id AND is_active = 1) as max_price,
+                (SELECT SUM(stock) FROM product_variants WHERE product_id = p.id AND is_active = 1) as total_stock,
+                (SELECT image_url FROM product_color_images WHERE product_id = p.id AND is_primary = 1 LIMIT 1) as default_image
+            FROM products p
+            JOIN brands b ON p.brand_id = b.id
+            JOIN product_related pr ON p.id = pr.related_product_id
+            WHERE pr.product_id = ? AND p.is_active = 1
+            ORDER BY pr.sort_order ASC, p.name ASC
+            LIMIT ?";
+    
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$product_id, $limit]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Get all related product IDs for a product (for admin)
+ */
+function getRelatedProductIds($product_id) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT related_product_id FROM product_related WHERE product_id = ? ORDER BY sort_order");
+    $stmt->execute([$product_id]);
+    return $stmt->fetchAll(PDO::FETCH_COLUMN);
+}
+
+/**
+ * Save related products for a product
+ */
+function saveRelatedProducts($product_id, $related_ids) {
+    $pdo = getDB();
+    // Delete existing relations
+    $stmt = $pdo->prepare("DELETE FROM product_related WHERE product_id = ?");
+    $stmt->execute([$product_id]);
+    
+    // Insert new relations
+    if (!empty($related_ids) && is_array($related_ids)) {
+        $stmt = $pdo->prepare("INSERT INTO product_related (product_id, related_product_id, sort_order) VALUES (?, ?, ?)");
+        $sort = 0;
+        foreach ($related_ids as $rid) {
+            $stmt->execute([$product_id, $rid, $sort++]);
+        }
+    }
+    return true;
+}
